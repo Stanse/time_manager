@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMPLE Time Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #6DD5A0 0%, #5BC98A 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .logo-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            margin: 0 2px;
+            vertical-align: middle;
+        }
+
+        .total-time {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .tasks-section {
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.95);
+            color: #666;
+            padding: 18px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            min-width: 300px;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .task-item.active {
+            background: rgba(255, 255, 255, 1);
+            border: 2px solid #4CAF50;
+        }
+
+        .task-name {
+            flex: 1;
+            text-align: left;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .task-name:hover {
+            background: rgba(108, 213, 160, 0.1);
+        }
+
+        .task-time {
+            font-weight: 600;
+            color: #4CAF50;
+            margin-left: 12px;
+        }
+
+        .task-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+
+        .btn-control {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px 8px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .btn-control:hover {
+            opacity: 1;
+        }
+
+        .btn-delete {
+            color: #f44336;
+        }
+
+        .new-task-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 18px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .new-task-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-family: inherit;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #6DD5A0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-btn-primary {
+            background: #6DD5A0;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background: #5BC98A;
+        }
+
+        .modal-btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #d0d0d0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                SIMP<span class="logo-dot"></span>E
+            </div>
+            <div class="total-time">TODAY <span id="totalTime">0h 0m</span></div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="section-title">ALL TASKS</div>
+            <div class="task-list" id="taskList"></div>
+            <button class="new-task-btn" onclick="openModal('create')">
+                <span style="font-size: 24px;">+</span> NEW TASK
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal for creating task -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">New Task</div>
+            <input
+                type="text"
+                class="modal-input"
+                id="taskInput"
+                placeholder="Enter task name..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" id="modalSubmitBtn" onclick="submitModal()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log(' Time Tracker App Initialized');
+
+        let tasks = [];
+        let activeTaskId = null;
+        let intervals = {};
+        let modalMode = 'create'; // 'create' or 'edit'
+        let editingTaskId = null;
+
+        // Load tasks from storage
+        async function loadTasks() {
+            console.log(' Loading tasks from storage...');
+            try {
+                const result = await window.storage.get('tasks');
+                if (result && result.value) {
+                    tasks = JSON.parse(result.value);
+                    console.log(` Loaded ${tasks.length} tasks:`, tasks);
+                    renderTasks();
+                    updateTotalTime();
+                } else {
+                    console.log(' No saved tasks found, starting with empty list');
+                    tasks = [];
+                }
+            } catch (error) {
+                console.error(' Error loading tasks:', error);
+                tasks = [];
+            }
+        }
+
+        // Save tasks to storage
+        async function saveTasks() {
+            console.log(' Saving tasks to storage...', tasks);
+            try {
+                await window.storage.set('tasks', JSON.stringify(tasks));
+                console.log(' Tasks saved successfully');
+            } catch (error) {
+                console.error(' Error saving tasks:', error);
+            }
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
+        }
+
+        function renderTasks() {
+            console.log(' Rendering tasks...');
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `task-item ${task.id === activeTaskId ? 'active' : ''}`;
+                taskDiv.innerHTML = `
+                    <div class="task-name" onclick="editTask('${task.id}', event)">${task.name}</div>
+                    <div class="task-time" id="time-${task.id}">${formatTime(task.totalTime)}</div>
+                    <div class="task-controls">
+                        <button class="btn-control" onclick="toggleTask('${task.id}', event)" title="${task.id === activeTaskId ? 'Stop' : 'Start'}">
+                            ${task.id === activeTaskId ? '' : ''}
+                        </button>
+                        <button class="btn-control btn-delete" onclick="deleteTask('${task.id}', event)" title="Delete">
+                            
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(taskDiv);
+            });
+            console.log(` Rendered ${tasks.length} tasks`);
+        }
+
+        function toggleTask(taskId, event) {
+            if (event) event.stopPropagation();
+            console.log(` Toggle task clicked: ${taskId}`);
+
+            if (activeTaskId === taskId) {
+                console.log(` Stopping task: ${taskId}`);
+                stopTask(taskId);
+            } else {
+                if (activeTaskId) {
+                    console.log(` Stopping previous task: ${activeTaskId}`);
+                    stopTask(activeTaskId);
+                }
+                console.log(` Starting task: ${taskId}`);
+                startTask(taskId);
+            }
+        }
+
+        function startTask(taskId) {
+            console.log(` Starting task: ${taskId}`);
+            try {
+                activeTaskId = taskId;
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) {
+                    console.error(` Task not found: ${taskId}`);
+                    return;
+                }
+
+                task.startTime = Date.now();
+                console.log(` Task start time: ${new Date(task.startTime).toLocaleTimeString()}`);
+
+                intervals[taskId] = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
+                    const timeEl = document.getElementById(`time-${taskId}`);
+                    if (timeEl) {
+                        timeEl.textContent = formatTime(task.totalTime + elapsed);
+                    }
+                    updateTotalTime();
+                }, 1000);
+
+                renderTasks();
+                console.log(` Task started successfully: ${task.name}`);
+            } catch (error) {
+                console.error(' Error starting task:', error);
+            }
+        }
+
+        function stopTask(taskId) {
+            console.log(` Stopping task: ${taskId}`);
+            try {
+                const task = tasks.find(t => t.id === taskId);
+                if (task && task.startTime) {
+                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
+                    task.totalTime += elapsed;
+                    task.startTime = null;
+                    console.log(` Task time updated: ${formatTime(task.totalTime)}`);
+                }
+
+                if (intervals[taskId]) {
+                    clearInterval(intervals[taskId]);
+                    delete intervals[taskId];
+                }
+
+                activeTaskId = null;
+                saveTasks();
+                renderTasks();
+                updateTotalTime();
+                console.log(` Task stopped successfully`);
+            } catch (error) {
+                console.error(' Error stopping task:', error);
+            }
+        }
+
+        function deleteTask(taskId, event) {
+            if (event) event.stopPropagation();
+            console.log(` Delete button clicked for task: ${taskId}`);
+
+            try {
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) {
+                    console.error(` Task not found: ${taskId}`);
+                    return;
+                }
+
+                console.log(` Attempting to delete task: "${task.name}" (ID: ${taskId})`);
+
+                if (confirm(`Delete task "${task.name}"?`)) {
+                    console.log(` User confirmed deletion`);
+
+                    if (activeTaskId === taskId) {
+                        console.log(` Task is active, stopping it first`);
+                        stopTask(taskId);
+                    }
+
+                    const tasksBefore = tasks.length;
+                    tasks = tasks.filter(t => t.id !== taskId);
+                    const tasksAfter = tasks.length;
+
+                    console.log(` Tasks count: ${tasksBefore}  ${tasksAfter}`);
+
+                    saveTasks();
+                    renderTasks();
+                    updateTotalTime();
+
+                    console.log(` Task deleted successfully: "${task.name}"`);
+                } else {
+                    console.log(` User cancelled deletion`);
+                }
+            } catch (error) {
+                console.error(' Error deleting task:', error);
+            }
+        }
+
+        function editTask(taskId, event) {
+            if (event) event.stopPropagation();
+            console.log(` Edit task clicked: ${taskId}`);
+
+            try {
+                const task = tasks.find(t => t.id === taskId);
+                if (!task) {
+                    console.error(` Task not found: ${taskId}`);
+                    return;
+                }
+
+                console.log(` Opening edit modal for task: "${task.name}"`);
+                openModal('edit', taskId, task.name);
+            } catch (error) {
+                console.error(' Error editing task:', error);
+            }
+        }
+
+        function updateTotalTime() {
+            try {
+                let total = 0;
+                tasks.forEach(task => {
+                    total += task.totalTime;
+                    if (task.id === activeTaskId && task.startTime) {
+                        total += Math.floor((Date.now() - task.startTime) / 1000);
+                    }
+                });
+                document.getElementById('totalTime').textContent = formatTime(total);
+            } catch (error) {
+                console.error(' Error updating total time:', error);
+            }
+        }
+
+        function openModal(mode = 'create', taskId = null, taskName = '') {
+            console.log(` Opening modal in ${mode} mode`);
+            try {
+                modalMode = mode;
+                editingTaskId = taskId;
+
+                const modal = document.getElementById('modal');
+                const modalTitle = document.getElementById('modalTitle');
+                const taskInput = document.getElementById('taskInput');
+                const submitBtn = document.getElementById('modalSubmitBtn');
+
+                if (mode === 'edit') {
+                    modalTitle.textContent = 'Edit Task';
+                    taskInput.value = taskName;
+                    submitBtn.textContent = 'Save';
+                    console.log(` Editing task: "${taskName}"`);
+                } else {
+                    modalTitle.textContent = 'New Task';
+                    taskInput.value = '';
+                    submitBtn.textContent = 'Create';
+                    console.log(` Creating new task`);
+                }
+
+                modal.classList.add('show');
+                taskInput.focus();
+                console.log(` Modal opened successfully`);
+            } catch (error) {
+                console.error(' Error opening modal:', error);
+            }
+        }
+
+        function closeModal() {
+            console.log(' Closing modal');
+            try {
+                const modal = document.getElementById('modal');
+                modal.classList.remove('show');
+                document.getElementById('taskInput').value = '';
+                modalMode = 'create';
+                editingTaskId = null;
+                console.log(' Modal closed successfully');
+            } catch (error) {
+                console.error(' Error closing modal:', error);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                console.log(' Enter key pressed');
+                submitModal();
+            }
+        }
+
+        function submitModal() {
+            console.log(` Submitting modal in ${modalMode} mode`);
+            try {
+                const input = document.getElementById('taskInput');
+                const taskName = input.value.trim();
+
+                if (!taskName) {
+                    console.warn(' Task name is empty');
+                    alert('Please enter a task name');
+                    return;
+                }
+
+                if (modalMode === 'edit') {
+                    console.log(` Updating task ${editingTaskId}: "${taskName}"`);
+                    const task = tasks.find(t => t.id === editingTaskId);
+                    if (task) {
+                        const oldName = task.name;
+                        task.name = taskName;
+                        console.log(` Task renamed: "${oldName}"  "${taskName}"`);
+                        saveTasks();
+                        renderTasks();
+                    } else {
+                        console.error(` Task not found: ${editingTaskId}`);
+                    }
+                } else {
+                    console.log(` Creating new task: "${taskName}"`);
+                    const newTask = {
+                        id: Date.now().toString(),
+                        name: taskName,
+                        totalTime: 0,
+                        startTime: null
+                    };
+
+                    tasks.push(newTask);
+                    console.log(` Task created with ID: ${newTask.id}`);
+                    saveTasks();
+                    renderTasks();
+                }
+
+                closeModal();
+            } catch (error) {
+                console.error(' Error submitting modal:', error);
+            }
+        }
+
+        // Initialize
+        console.log(' Starting application...');
+        loadTasks();
+        console.log(' Application ready!');
+    </script>
+</body>
+</html>
