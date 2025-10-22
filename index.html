@@ -624,24 +624,29 @@
         const storage = {
             async get(key) {
                 try {
-                    // Try Telegram WebApp storage first
+                    // Try localStorage first (always available and synchronous)
+                    const localValue = localStorage.getItem(key);
+                    console.log('💾 localStorage value:', localValue ? 'found' : 'empty');
+
+                    // Try Telegram WebApp storage if available
                     if (window.Telegram?.WebApp?.CloudStorage) {
-                        console.log('📡 Using Telegram CloudStorage for GET');
+                        console.log('📡 Checking Telegram CloudStorage for GET');
                         return new Promise((resolve) => {
-                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
+                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, cloudValue) => {
                                 if (error) {
-                                    console.warn('Telegram storage error, falling back to localStorage:', error);
-                                    resolve({ value: localStorage.getItem(key) });
+                                    console.warn('Telegram storage error, using localStorage:', error);
+                                    resolve({ value: localValue });
                                 } else {
                                     console.log('✅ Got data from Telegram CloudStorage');
-                                    resolve({ value });
+                                    // Use CloudStorage if available and not empty, otherwise localStorage
+                                    resolve({ value: cloudValue || localValue });
                                 }
                             });
                         });
                     }
                     // Fallback to localStorage
                     console.log('💾 Using localStorage for GET');
-                    return { value: localStorage.getItem(key) };
+                    return { value: localValue };
                 } catch (error) {
                     console.error('Storage get error:', error);
                     return { value: localStorage.getItem(key) };
@@ -684,6 +689,17 @@
                 if (result && result.value) {
                     tasks = JSON.parse(result.value);
                     console.log(`✓ Loaded ${tasks.length} tasks:`, tasks);
+
+                    // Check if there was an active task that was running
+                    const wasActiveTask = tasks.find(t => t.startTime !== null);
+                    if (wasActiveTask) {
+                        console.log(`⚠️ Found task with startTime: ${wasActiveTask.name}`);
+                        console.log(`   This task was active when app was closed/minimized`);
+                        // Note: We keep the startTime but don't auto-resume
+                        // The user should manually start it again if they want to continue
+                        // Or we could add logic here to resume it automatically
+                    }
+
                     renderTasks();
                     updateTotalTime();
                 } else {
@@ -1058,9 +1074,11 @@
                 const task = tasks.find(t => t.id === activeTaskId);
                 if (task && task.startTime) {
                     const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    task.totalTime += elapsed;
+                    if (elapsed > 0) {
+                        task.totalTime += elapsed;
+                        console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
+                    }
                     task.startTime = null;
-                    console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
                 }
             }
             // Use synchronous save function
@@ -1076,28 +1094,47 @@
                     if (task && task.startTime) {
                         const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
                         task.totalTime += elapsed;
-                        task.startTime = Date.now(); // Reset start time for when app comes back
+                        // Keep startTime as current time so timer continues when app returns
+                        task.startTime = Date.now();
                         console.log(`⏱ Saved active task time on hide: ${formatTime(task.totalTime)}`);
                     }
                 }
                 saveTasksSync();
             } else {
-                console.log('👁️ App visible again');
+                console.log('👁️ App visible again - resuming timer if needed');
+                // When app becomes visible again, update startTime to current moment
+                if (activeTaskId) {
+                    const task = tasks.find(t => t.id === activeTaskId);
+                    if (task && task.startTime) {
+                        // Reset startTime to now to continue tracking correctly
+                        task.startTime = Date.now();
+                        console.log(`⏱ Timer resumed for task: ${task.name}`);
+                    }
+                }
             }
         });
 
         // pagehide event - more reliable than beforeunload on mobile
+        // This fires when page is actually being unloaded (closed, not just hidden)
         window.addEventListener('pagehide', (event) => {
-            console.log('📱 Page hide event - saving...');
+            console.log('📱 Page hide event - final save on close...');
             if (activeTaskId) {
                 const task = tasks.find(t => t.id === activeTaskId);
                 if (task && task.startTime) {
+                    // Calculate total time from startTime to now
                     const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    task.totalTime += elapsed;
-                    task.startTime = null;
-                    console.log(`⏱ Saved active task time on pagehide: ${formatTime(task.totalTime)}`);
+                    // Only add elapsed time if it's significant (more than 1 second)
+                    // This avoids double-counting if visibilitychange already saved
+                    if (elapsed > 0) {
+                        task.totalTime += elapsed;
+                        console.log(`⏱ Final save - added ${elapsed}s, total: ${formatTime(task.totalTime)}`);
+                    } else {
+                        console.log(`⏱ Final save - no additional time to add`);
+                    }
+                    task.startTime = null; // Clear startTime on final close
                 }
             }
+            // Don't clear activeTaskId here - let it be saved for potential resume
             saveTasksSync();
         }, { capture: true });
 
