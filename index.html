@@ -104,12 +104,9 @@
             text-align: left;
             text-transform: uppercase;
             letter-spacing: 1px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.2s;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
+            color: #333;
         }
 
         .task-info {
@@ -118,13 +115,14 @@
             flex-direction: column;
             gap: 4px;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 4px 0;
             border-radius: 4px;
             transition: background 0.2s;
+            align-items: flex-start;
         }
 
         .task-info:hover {
-            background: rgba(108, 213, 160, 0.1);
+            background: rgba(108, 213, 160, 0.05);
         }
 
         .task-time {
@@ -185,36 +183,6 @@
 
         .btn-delete:hover {
             background: rgba(244, 67, 54, 0.1);
-        }
-
-        .trash-icon {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            position: relative;
-        }
-
-        .trash-icon::before {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 12px;
-            border: 2px solid currentColor;
-            border-top: 0;
-            bottom: 0;
-            left: 1px;
-            border-radius: 0 0 2px 2px;
-        }
-
-        .trash-icon::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 3px;
-            background: currentColor;
-            top: 3px;
-            left: 0;
-            border-radius: 2px 2px 0 0;
         }
 
         .new-task-btn {
@@ -429,7 +397,7 @@
                             ${buttonText}
                         </button>
                         <button class="btn-control btn-delete" onclick="deleteTask('${task.id}', event)" title="Delete">
-                            <span class="trash-icon"></span>
+                            🗑️
                         </button>
                     </div>
                 `;
