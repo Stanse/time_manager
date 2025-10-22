@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIMPLE Time Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -508,16 +509,7 @@
     </div>
 
     <script>
-        // Override console methods to capture logs in debug panel
-        const originalConsole = {
-            log: console.log,
-            error: console.error,
-            warn: console.warn,
-            info: console.info
-        };
 
-        let debugEnabled = false;
-        const maxDebugLogs = 100; // Limit logs to prevent memory issues
 
         function addDebugLog(message, type = 'log') {
             const debugLogs = document.getElementById('debugLogs');
@@ -607,18 +599,21 @@
                 try {
                     // Try Telegram WebApp storage first
                     if (window.Telegram?.WebApp?.CloudStorage) {
+                        console.log('📡 Using Telegram CloudStorage for GET');
                         return new Promise((resolve) => {
                             window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
                                 if (error) {
                                     console.warn('Telegram storage error, falling back to localStorage:', error);
                                     resolve({ value: localStorage.getItem(key) });
                                 } else {
+                                    console.log('✅ Got data from Telegram CloudStorage');
                                     resolve({ value });
                                 }
                             });
                         });
                     }
                     // Fallback to localStorage
+                    console.log('💾 Using localStorage for GET (Telegram API not available)');
                     return { value: localStorage.getItem(key) };
                 } catch (error) {
                     console.error('Storage get error:', error);
@@ -629,6 +624,7 @@
                 try {
                     // Try Telegram WebApp storage first
                     if (window.Telegram?.WebApp?.CloudStorage) {
+                        console.log('📡 Using Telegram CloudStorage for SET');
                         return new Promise((resolve, reject) => {
                             window.Telegram.WebApp.CloudStorage.setItem(key, value, (error, success) => {
                                 if (error) {
@@ -636,12 +632,14 @@
                                     localStorage.setItem(key, value);
                                     resolve();
                                 } else {
+                                    console.log('✅ Saved data to Telegram CloudStorage');
                                     resolve();
                                 }
                             });
                         });
                     }
                     // Fallback to localStorage
+                    console.log('💾 Using localStorage for SET (Telegram API not available)');
                     localStorage.setItem(key, value);
                 } catch (error) {
                     console.error('Storage set error:', error);
@@ -1001,6 +999,7 @@
 
         // Initialize
         console.log('🚀 Starting application...');
+        checkTelegramWebApp();
         loadTasks();
         console.log('✓ Application ready!');
     </script>
