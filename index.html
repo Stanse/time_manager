@@ -1024,67 +1024,6 @@
             }
         }
 
-
-        // Auto-save before page unload (when app is closed)
-        window.addEventListener('beforeunload', () => {
-            console.log('💾 Auto-saving before app close...');
-            if (activeTaskId) {
-                const task = tasks.find(t => t.id === activeTaskId);
-                if (task && task.startTime) {
-                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    task.totalTime += elapsed;
-                    task.startTime = null;
-                    console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
-                }
-            }
-            // Use synchronous localStorage as fallback since async might not complete
-            try {
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                console.log('✓ Tasks saved to localStorage on close');
-            } catch (error) {
-                console.error('❌ Error saving on close:', error);
-            }
-        });
-
-        // Telegram WebApp specific: save when app goes to background
-        if (window.Telegram?.WebApp) {
-            console.log('📱 Setting up Telegram lifecycle handlers...');
-            
-            // Save when viewport changes (app minimized/backgrounded)
-            window.Telegram.WebApp.onEvent('viewportChanged', () => {
-                console.log('👁️ Viewport changed - auto-saving...');
-                if (activeTaskId) {
-                    const task = tasks.find(t => t.id === activeTaskId);
-                    if (task && task.startTime) {
-                        const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                        task.totalTime += elapsed;
-                        task.startTime = Date.now(); // Reset start time to now
-                        saveTasks();
-                    }
-                }
-            });
-        }
-
-        // Periodic auto-save every 30 seconds when task is active
-        setInterval(() => {
-            if (activeTaskId) {
-                const task = tasks.find(t => t.id === activeTaskId);
-                if (task && task.startTime) {
-                    console.log('💾 Periodic auto-save (task is running)...');
-                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    const tempTotalTime = task.totalTime;
-                    task.totalTime += elapsed;
-                    task.startTime = Date.now(); // Reset start time
-                    saveTasks().then(() => {
-                        console.log('✓ Periodic save completed');
-                    }).catch(() => {
-                        // Restore on error
-                        task.totalTime = tempTotalTime;
-                    });
-                }
-            }
-        }, 30000); // Every 30 seconds
-
         // Initialize
         console.log('🚀 Starting application...');
         loadTasks();
