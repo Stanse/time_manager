@@ -338,6 +338,108 @@
             background: #d0d0d0;
         }
 
+        /* Debug Panel */
+        .debug-panel {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 40vh;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-y: auto;
+            z-index: 9999;
+            padding: 10px;
+            border-top: 2px solid #00ff00;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .debug-title {
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .debug-clear {
+            background: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            border-radius: 3px;
+        }
+
+        .debug-clear:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .debug-log {
+            margin: 3px 0;
+            padding: 3px 5px;
+            border-left: 2px solid #00ff00;
+            word-wrap: break-word;
+        }
+
+        .debug-log.error {
+            color: #ff4444;
+            border-left-color: #ff4444;
+        }
+
+        .debug-log.warn {
+            color: #ffaa00;
+            border-left-color: #ffaa00;
+        }
+
+        .debug-log.info {
+            color: #00aaff;
+            border-left-color: #00aaff;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .debug-toggle:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .debug-toggle.active {
+            background: rgba(0, 255, 0, 0.4);
+        }
+
         @keyframes taskStart {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -395,7 +497,102 @@
         </div>
     </div>
 
+    <!-- Debug Panel -->
+    <div class="debug-toggle" id="debugToggle" onclick="toggleDebug()">🐛</div>
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <div class="debug-title">🐛 DEBUG CONSOLE</div>
+            <button class="debug-clear" onclick="clearDebugLogs()">Clear</button>
+        </div>
+        <div id="debugLogs"></div>
+    </div>
+
     <script>
+        // Override console methods to capture logs in debug panel
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+
+        let debugEnabled = false;
+        const maxDebugLogs = 100; // Limit logs to prevent memory issues
+
+        function addDebugLog(message, type = 'log') {
+            const debugLogs = document.getElementById('debugLogs');
+            if (!debugLogs) return;
+
+            const logDiv = document.createElement('div');
+            logDiv.className = `debug-log ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const messageStr = typeof message === 'object' ? JSON.stringify(message, null, 2) : String(message);
+            logDiv.textContent = `[${timestamp}] ${messageStr}`;
+            
+            debugLogs.appendChild(logDiv);
+            
+            // Remove old logs if too many
+            while (debugLogs.children.length > maxDebugLogs) {
+                debugLogs.removeChild(debugLogs.firstChild);
+            }
+            
+            // Auto-scroll to bottom
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+        }
+
+        // Override console methods
+        console.log = function(...args) {
+            originalConsole.log.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'log'));
+            }
+        };
+
+        console.error = function(...args) {
+            originalConsole.error.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'error'));
+            }
+        };
+
+        console.warn = function(...args) {
+            originalConsole.warn.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'warn'));
+            }
+        };
+
+        console.info = function(...args) {
+            originalConsole.info.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'info'));
+            }
+        };
+
+        function toggleDebug() {
+            debugEnabled = !debugEnabled;
+            const debugPanel = document.getElementById('debugPanel');
+            const debugToggle = document.getElementById('debugToggle');
+            
+            if (debugEnabled) {
+                debugPanel.classList.add('show');
+                debugToggle.classList.add('active');
+                console.log('🐛 Debug mode enabled');
+            } else {
+                debugPanel.classList.remove('show');
+                debugToggle.classList.remove('active');
+            }
+        }
+
+        function clearDebugLogs() {
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                debugLogs.innerHTML = '';
+                console.log('🗑️ Debug logs cleared');
+            }
+        }
+
         console.log('✓ Time Tracker App Initialized');
 
         let tasks = [];
@@ -404,11 +601,60 @@
         let modalMode = 'create'; // 'create' or 'edit'
         let editingTaskId = null;
 
+        // Storage wrapper that works in both Telegram WebApp and regular browser
+        const storage = {
+            async get(key) {
+                try {
+                    // Try Telegram WebApp storage first
+                    if (window.Telegram?.WebApp?.CloudStorage) {
+                        return new Promise((resolve) => {
+                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
+                                if (error) {
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    resolve({ value: localStorage.getItem(key) });
+                                } else {
+                                    resolve({ value });
+                                }
+                            });
+                        });
+                    }
+                    // Fallback to localStorage
+                    return { value: localStorage.getItem(key) };
+                } catch (error) {
+                    console.error('Storage get error:', error);
+                    return { value: localStorage.getItem(key) };
+                }
+            },
+            async set(key, value) {
+                try {
+                    // Try Telegram WebApp storage first
+                    if (window.Telegram?.WebApp?.CloudStorage) {
+                        return new Promise((resolve, reject) => {
+                            window.Telegram.WebApp.CloudStorage.setItem(key, value, (error, success) => {
+                                if (error) {
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    localStorage.setItem(key, value);
+                                    resolve();
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        });
+                    }
+                    // Fallback to localStorage
+                    localStorage.setItem(key, value);
+                } catch (error) {
+                    console.error('Storage set error:', error);
+                    localStorage.setItem(key, value);
+                }
+            }
+        };
+
         // Load tasks from storage
         async function loadTasks() {
             console.log('📂 Loading tasks from storage...');
             try {
-                const result = await window.storage.get('tasks');
+                const result = await storage.get('tasks');
                 if (result && result.value) {
                     tasks = JSON.parse(result.value);
                     console.log(`✓ Loaded ${tasks.length} tasks:`, tasks);
@@ -428,7 +674,7 @@
         async function saveTasks() {
             console.log('💾 Saving tasks to storage...', tasks);
             try {
-                await window.storage.set('tasks', JSON.stringify(tasks));
+                await storage.set('tasks', JSON.stringify(tasks));
                 console.log('✓ Tasks saved successfully');
             } catch (error) {
                 console.error('❌ Error saving tasks:', error);
