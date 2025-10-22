@@ -706,6 +706,31 @@
             }
         }
 
+        // Synchronous save for critical moments (app close, minimize, etc.)
+        function saveTasksSync() {
+            console.log('💾 Sync saving tasks...', tasks);
+            try {
+                // Always save to localStorage synchronously first
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+
+                // Try to save to Telegram CloudStorage (async, but initiated)
+                if (window.Telegram?.WebApp?.CloudStorage) {
+                    window.Telegram.WebApp.CloudStorage.setItem('tasks', JSON.stringify(tasks),
+                        (error) => {
+                            if (error) {
+                                console.warn('CloudStorage sync save failed:', error);
+                            } else {
+                                console.log('✓ CloudStorage sync save OK');
+                            }
+                        }
+                    );
+                }
+                console.log('✓ Sync save completed');
+            } catch (error) {
+                console.error('❌ Sync save error:', error);
+            }
+        }
+
         function formatTime(seconds) {
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
@@ -1037,19 +1062,56 @@
                     console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
                 }
             }
-            // Use synchronous localStorage as fallback since async might not complete
-            try {
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                console.log('✓ Tasks saved to localStorage on close');
-            } catch (error) {
-                console.error('❌ Error saving on close:', error);
+            // Use synchronous save function
+            saveTasksSync();
+        });
+
+        // Page Visibility API - handles app minimization/backgrounding more reliably
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 App hidden (minimized/backgrounded) - saving...');
+                if (activeTaskId) {
+                    const task = tasks.find(t => t.id === activeTaskId);
+                    if (task && task.startTime) {
+                        const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
+                        task.totalTime += elapsed;
+                        task.startTime = Date.now(); // Reset start time for when app comes back
+                        console.log(`⏱ Saved active task time on hide: ${formatTime(task.totalTime)}`);
+                    }
+                }
+                saveTasksSync();
+            } else {
+                console.log('👁️ App visible again');
             }
         });
+
+        // pagehide event - more reliable than beforeunload on mobile
+        window.addEventListener('pagehide', (event) => {
+            console.log('📱 Page hide event - saving...');
+            if (activeTaskId) {
+                const task = tasks.find(t => t.id === activeTaskId);
+                if (task && task.startTime) {
+                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
+                    task.totalTime += elapsed;
+                    task.startTime = null;
+                    console.log(`⏱ Saved active task time on pagehide: ${formatTime(task.totalTime)}`);
+                }
+            }
+            saveTasksSync();
+        }, { capture: true });
 
         // Telegram WebApp specific: save when app goes to background
         if (window.Telegram?.WebApp) {
             console.log('📱 Setting up Telegram lifecycle handlers...');
-            
+
+            // Enable closing confirmation to get more time to save
+            try {
+                window.Telegram.WebApp.enableClosingConfirmation();
+                console.log('✓ Closing confirmation enabled');
+            } catch (error) {
+                console.warn('⚠️ Could not enable closing confirmation:', error);
+            }
+
             // Save when viewport changes (app minimized/backgrounded)
             window.Telegram.WebApp.onEvent('viewportChanged', () => {
                 console.log('👁️ Viewport changed - auto-saving...');
@@ -1059,10 +1121,38 @@
                         const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
                         task.totalTime += elapsed;
                         task.startTime = Date.now(); // Reset start time to now
-                        saveTasks();
                     }
                 }
+                saveTasksSync();
             });
+
+            // Save on main button click (if used)
+            window.Telegram.WebApp.onEvent('mainButtonClicked', () => {
+                console.log('🔘 Main button clicked - saving...');
+                saveTasksSync();
+            });
+
+            // Save on back button click
+            window.Telegram.WebApp.onEvent('backButtonClicked', () => {
+                console.log('◀️ Back button clicked - saving...');
+                if (activeTaskId) {
+                    const task = tasks.find(t => t.id === activeTaskId);
+                    if (task && task.startTime) {
+                        const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
+                        task.totalTime += elapsed;
+                        task.startTime = null;
+                    }
+                }
+                saveTasksSync();
+            });
+
+            // Save when theme changes (often happens when app is being closed)
+            window.Telegram.WebApp.onEvent('themeChanged', () => {
+                console.log('🎨 Theme changed - saving as precaution...');
+                saveTasksSync();
+            });
+
+            console.log('✓ Telegram lifecycle handlers configured');
         }
 
         // Periodic auto-save every 5 minutes when task is active
