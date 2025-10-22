@@ -85,6 +85,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
@@ -100,7 +101,6 @@
         }
 
         .task-name {
-            flex: 1;
             text-align: left;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -108,23 +108,35 @@
             padding: 4px 8px;
             border-radius: 4px;
             transition: background 0.2s;
+            font-size: 16px;
+            font-weight: 500;
         }
 
-        .task-name:hover {
+        .task-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .task-info:hover {
             background: rgba(108, 213, 160, 0.1);
         }
 
         .task-time {
             font-weight: 600;
             color: #4CAF50;
-            margin-left: 12px;
             font-family: 'Courier New', monospace;
+            font-size: 14px;
         }
 
         .task-controls {
             display: flex;
             gap: 8px;
-            margin-left: 12px;
         }
 
         .btn-control {
@@ -173,6 +185,36 @@
 
         .btn-delete:hover {
             background: rgba(244, 67, 54, 0.1);
+        }
+
+        .trash-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            position: relative;
+        }
+
+        .trash-icon::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-top: 0;
+            bottom: 0;
+            left: 1px;
+            border-radius: 0 0 2px 2px;
+        }
+
+        .trash-icon::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 3px;
+            background: currentColor;
+            top: 3px;
+            left: 0;
+            border-radius: 2px 2px 0 0;
         }
 
         .new-task-btn {
@@ -378,14 +420,16 @@
                 const buttonText = isActive ? 'STOP' : 'START';
                 
                 taskDiv.innerHTML = `
-                    <div class="task-name" onclick="editTask('${task.id}', event)">${task.name}</div>
-                    <div class="task-time" id="time-${task.id}">${formatTime(task.totalTime)}</div>
+                    <div class="task-info" onclick="editTask('${task.id}', event)">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-time" id="time-${task.id}">${formatTime(task.totalTime)}</div>
+                    </div>
                     <div class="task-controls">
                         <button class="${buttonClass}" onclick="toggleTask('${task.id}', event)" title="${buttonText}">
                             ${buttonText}
                         </button>
                         <button class="btn-control btn-delete" onclick="deleteTask('${task.id}', event)" title="Delete">
-                            DEL
+                            <span class="trash-icon"></span>
                         </button>
                     </div>
                 `;
