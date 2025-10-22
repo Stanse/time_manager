@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIMPLE Time Tracker</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -82,9 +81,11 @@
             font-weight: 500;
             min-width: 300px;
             max-width: 600px;
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
@@ -97,51 +98,139 @@
         .task-item.active {
             background: rgba(255, 255, 255, 1);
             border: 2px solid #4CAF50;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(76, 175, 80, 0.5);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 15px rgba(76, 175, 80, 0.4);
+            }
         }
 
         .task-name {
-            flex: 1;
             text-align: left;
             text-transform: uppercase;
             letter-spacing: 1px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.2s;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
         }
 
-        .task-name:hover {
-            background: rgba(108, 213, 160, 0.1);
+        .task-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 4px 0;
+            border-radius: 4px;
+            transition: background 0.2s;
+            align-items: flex-start;
+        }
+
+        .task-info:hover {
+            background: rgba(108, 213, 160, 0.05);
         }
 
         .task-time {
             font-weight: 600;
             color: #4CAF50;
-            margin-left: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
         }
 
         .task-controls {
             display: flex;
-            gap: 8px;
-            margin-left: 12px;
+            gap: 12px;
         }
 
         .btn-control {
-            background: none;
-            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(0, 0, 0, 0.1);
             cursor: pointer;
-            font-size: 20px;
-            padding: 4px 8px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
+            font-size: 14px;
+            padding: 12px 16px;
+            min-width: 44px;
+            min-height: 44px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-control:hover {
-            opacity: 1;
+            background: rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-control:active {
+            transform: scale(0.95);
+        }
+
+        .btn-start {
+            color: #4CAF50;
+            border-color: #4CAF50;
+            min-width: 80px;
+        }
+
+        .btn-start:hover {
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .btn-stop {
+            color: #FF9800;
+            border-color: #FF9800;
+            animation: pulse-stop 2s ease-in-out infinite;
+            min-width: 80px;
+        }
+
+        .btn-stop:hover {
+            background: rgba(255, 152, 0, 0.1);
+        }
+
+        @keyframes pulse-stop {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+            }
+        }
+
+        @keyframes click-feedback {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.92);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .btn-control.clicking {
+            animation: click-feedback 0.3s ease;
         }
 
         .btn-delete {
+            color: #999;
+            border-color: transparent;
+            background: transparent;
+            font-size: 20px;
+            padding: 10px;
+        }
+
+        .btn-delete:hover {
             color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+            border-color: #f44336;
         }
 
         .new-task-btn {
@@ -155,10 +244,11 @@
             cursor: pointer;
             transition: all 0.3s ease;
             min-width: 300px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            margin: 0 auto;
         }
 
         .new-task-btn:hover {
@@ -247,6 +337,128 @@
         .modal-btn-secondary:hover {
             background: #d0d0d0;
         }
+
+        /* Debug Panel */
+        .debug-panel {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 40vh;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            overflow-y: auto;
+            z-index: 9999;
+            padding: 10px;
+            border-top: 2px solid #00ff00;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .debug-title {
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .debug-clear {
+            background: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            border-radius: 3px;
+        }
+
+        .debug-clear:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .debug-log {
+            margin: 3px 0;
+            padding: 3px 5px;
+            border-left: 2px solid #00ff00;
+            word-wrap: break-word;
+        }
+
+        .debug-log.error {
+            color: #ff4444;
+            border-left-color: #ff4444;
+        }
+
+        .debug-log.warn {
+            color: #ffaa00;
+            border-left-color: #ffaa00;
+        }
+
+        .debug-log.info {
+            color: #00aaff;
+            border-left-color: #00aaff;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .debug-toggle:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .debug-toggle.active {
+            background: rgba(0, 255, 0, 0.4);
+        }
+
+        @keyframes taskStart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes taskStop {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        .task-item.starting {
+            animation: taskStart 0.3s ease;
+        }
+
+        .task-item.stopping {
+            animation: taskStop 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -255,7 +467,7 @@
             <div class="logo">
                 SIMP<span class="logo-dot"></span>E
             </div>
-            <div class="total-time">TODAY <span id="totalTime">0h 0m</span></div>
+            <div class="total-time">TODAY <span id="totalTime">0h 0m 0s</span></div>
         </div>
 
         <div class="tasks-section">
@@ -285,53 +497,103 @@
         </div>
     </div>
 
-    <script>
-        console.log(' Time Tracker App Initialized');
+    <!-- Debug Panel -->
+    <div class="debug-toggle" id="debugToggle" onclick="toggleDebug()">🐛</div>
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <div class="debug-title">🐛 DEBUG CONSOLE</div>
+            <button class="debug-clear" onclick="clearDebugLogs()">Clear</button>
+        </div>
+        <div id="debugLogs"></div>
+    </div>
 
-        // Check Telegram WebApp
-        console.log('🔍 Telegram API:', !!window.Telegram?.WebApp);
-        
-        // Storage wrapper
-        const storage = {
-            async get(key) {
-                if (window.Telegram?.WebApp?.CloudStorage) {
-                    console.log('📡 GET from Cloud');
-                    return new Promise((resolve) => {
-                        window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
-                            if (error) {
-                                console.warn('⚠️ Cloud error:', error);
-                                resolve({ value: localStorage.getItem(key) });
-                            } else {
-                                console.log('✅ Got from Cloud');
-                                resolve({ value });
-                            }
-                        });
-                    });
-                }
-                console.log('💾 GET from localStorage');
-                return { value: localStorage.getItem(key) };
-            },
-            async set(key, value) {
-                if (window.Telegram?.WebApp?.CloudStorage) {
-                    console.log('📡 SET to Cloud');
-                    return new Promise((resolve) => {
-                        window.Telegram.WebApp.CloudStorage.setItem(key, value, (error) => {
-                            if (error) {
-                                console.warn('⚠️ Cloud error:', error);
-                                localStorage.setItem(key, value);
-                            } else {
-                                console.log('✅ Saved to Cloud');
-                            }
-                            resolve();
-                        });
-                    });
-                }
-                console.log('💾 SET to localStorage');
-                localStorage.setItem(key, value);
+    <script>
+        // Override console methods to capture logs in debug panel
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+
+        let debugEnabled = false;
+        const maxDebugLogs = 100; // Limit logs to prevent memory issues
+
+        function addDebugLog(message, type = 'log') {
+            const debugLogs = document.getElementById('debugLogs');
+            if (!debugLogs) return;
+
+            const logDiv = document.createElement('div');
+            logDiv.className = `debug-log ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const messageStr = typeof message === 'object' ? JSON.stringify(message, null, 2) : String(message);
+            logDiv.textContent = `[${timestamp}] ${messageStr}`;
+            
+            debugLogs.appendChild(logDiv);
+            
+            // Remove old logs if too many
+            while (debugLogs.children.length > maxDebugLogs) {
+                debugLogs.removeChild(debugLogs.firstChild);
+            }
+            
+            // Auto-scroll to bottom
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+        }
+
+        // Override console methods
+        console.log = function(...args) {
+            originalConsole.log.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'log'));
             }
         };
-        
-        window.storage = storage;
+
+        console.error = function(...args) {
+            originalConsole.error.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'error'));
+            }
+        };
+
+        console.warn = function(...args) {
+            originalConsole.warn.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'warn'));
+            }
+        };
+
+        console.info = function(...args) {
+            originalConsole.info.apply(console, args);
+            if (debugEnabled) {
+                args.forEach(arg => addDebugLog(arg, 'info'));
+            }
+        };
+
+        function toggleDebug() {
+            debugEnabled = !debugEnabled;
+            const debugPanel = document.getElementById('debugPanel');
+            const debugToggle = document.getElementById('debugToggle');
+            
+            if (debugEnabled) {
+                debugPanel.classList.add('show');
+                debugToggle.classList.add('active');
+                console.log('🐛 Debug mode enabled');
+            } else {
+                debugPanel.classList.remove('show');
+                debugToggle.classList.remove('active');
+            }
+        }
+
+        function clearDebugLogs() {
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                debugLogs.innerHTML = '';
+                console.log('🗑️ Debug logs cleared');
+            }
+        }
+
+        console.log('✓ Time Tracker App Initialized');
 
         let tasks = [];
         let activeTaskId = null;
@@ -339,97 +601,178 @@
         let modalMode = 'create'; // 'create' or 'edit'
         let editingTaskId = null;
 
+        // Storage wrapper that works in both Telegram WebApp and regular browser
+        const storage = {
+            async get(key) {
+                try {
+                    // Try Telegram WebApp storage first
+                    if (window.Telegram?.WebApp?.CloudStorage) {
+                        return new Promise((resolve) => {
+                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
+                                if (error) {
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    resolve({ value: localStorage.getItem(key) });
+                                } else {
+                                    resolve({ value });
+                                }
+                            });
+                        });
+                    }
+                    // Fallback to localStorage
+                    return { value: localStorage.getItem(key) };
+                } catch (error) {
+                    console.error('Storage get error:', error);
+                    return { value: localStorage.getItem(key) };
+                }
+            },
+            async set(key, value) {
+                try {
+                    // Try Telegram WebApp storage first
+                    if (window.Telegram?.WebApp?.CloudStorage) {
+                        return new Promise((resolve, reject) => {
+                            window.Telegram.WebApp.CloudStorage.setItem(key, value, (error, success) => {
+                                if (error) {
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    localStorage.setItem(key, value);
+                                    resolve();
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        });
+                    }
+                    // Fallback to localStorage
+                    localStorage.setItem(key, value);
+                } catch (error) {
+                    console.error('Storage set error:', error);
+                    localStorage.setItem(key, value);
+                }
+            }
+        };
+
         // Load tasks from storage
         async function loadTasks() {
-            console.log(' Loading tasks from storage...');
+            console.log('📂 Loading tasks from storage...');
             try {
-                const result = await window.storage.get('tasks');
+                const result = await storage.get('tasks');
                 if (result && result.value) {
                     tasks = JSON.parse(result.value);
-                    console.log(` Loaded ${tasks.length} tasks:`, tasks);
+                    console.log(`✓ Loaded ${tasks.length} tasks:`, tasks);
                     renderTasks();
                     updateTotalTime();
                 } else {
-                    console.log(' No saved tasks found, starting with empty list');
+                    console.log('📝 No saved tasks found, starting with empty list');
                     tasks = [];
                 }
             } catch (error) {
-                console.error(' Error loading tasks:', error);
+                console.error('❌ Error loading tasks:', error);
                 tasks = [];
             }
         }
 
         // Save tasks to storage
         async function saveTasks() {
-            console.log(' Saving tasks to storage...', tasks);
+            console.log('💾 Saving tasks to storage...', tasks);
             try {
-                await window.storage.set('tasks', JSON.stringify(tasks));
-                console.log(' Tasks saved successfully');
+                await storage.set('tasks', JSON.stringify(tasks));
+                console.log('✓ Tasks saved successfully');
             } catch (error) {
-                console.error(' Error saving tasks:', error);
+                console.error('❌ Error saving tasks:', error);
             }
         }
 
         function formatTime(seconds) {
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
-            return `${hours}h ${minutes}m`;
+            const secs = seconds % 60;
+            return `${hours}h ${minutes}m ${secs}s`;
         }
 
         function renderTasks() {
-            console.log(' Rendering tasks...');
+            console.log('🎨 Rendering tasks...');
             const taskList = document.getElementById('taskList');
             taskList.innerHTML = '';
 
             tasks.forEach(task => {
                 const taskDiv = document.createElement('div');
                 taskDiv.className = `task-item ${task.id === activeTaskId ? 'active' : ''}`;
+                
+                const isActive = task.id === activeTaskId;
+                const buttonClass = isActive ? 'btn-control btn-stop' : 'btn-control btn-start';
+                const buttonText = isActive ? 'STOP' : 'START';
+                
                 taskDiv.innerHTML = `
-                    <div class="task-name" onclick="editTask('${task.id}', event)">${task.name}</div>
-                    <div class="task-time" id="time-${task.id}">${formatTime(task.totalTime)}</div>
+                    <div class="task-info" onclick="editTask('${task.id}', event)">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-time" id="time-${task.id}">${formatTime(task.totalTime)}</div>
+                    </div>
                     <div class="task-controls">
-                        <button class="btn-control" onclick="toggleTask('${task.id}', event)" title="${task.id === activeTaskId ? 'Stop' : 'Start'}">
-                            ${task.id === activeTaskId ? '' : ''}
+                        <button class="${buttonClass}" onclick="toggleTask('${task.id}', event)" title="${buttonText}">
+                            ${buttonText}
                         </button>
                         <button class="btn-control btn-delete" onclick="deleteTask('${task.id}', event)" title="Delete">
-                            
+                            🗑️
                         </button>
                     </div>
                 `;
                 taskList.appendChild(taskDiv);
             });
-            console.log(` Rendered ${tasks.length} tasks`);
+            console.log(`✓ Rendered ${tasks.length} tasks`);
         }
 
         function toggleTask(taskId, event) {
-            if (event) event.stopPropagation();
-            console.log(` Toggle task clicked: ${taskId}`);
+            if (event) {
+                event.stopPropagation();
+                // Add visual feedback to button
+                const button = event.target.closest('.btn-control');
+                if (button) {
+                    button.classList.add('clicking');
+                    setTimeout(() => button.classList.remove('clicking'), 300);
+                }
+            }
+            console.log(`🔄 Toggle task clicked: ${taskId}`);
+
+            // Vibration feedback (if supported)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            // Find task element for animation
+            const taskElement = event?.target.closest('.task-item');
 
             if (activeTaskId === taskId) {
-                console.log(` Stopping task: ${taskId}`);
+                console.log(`⏸ Stopping task: ${taskId}`);
+                if (taskElement) {
+                    taskElement.classList.add('stopping');
+                    setTimeout(() => taskElement.classList.remove('stopping'), 300);
+                }
                 stopTask(taskId);
             } else {
                 if (activeTaskId) {
-                    console.log(` Stopping previous task: ${activeTaskId}`);
+                    console.log(`⏸ Stopping previous task: ${activeTaskId}`);
                     stopTask(activeTaskId);
                 }
-                console.log(` Starting task: ${taskId}`);
+                console.log(`▶ Starting task: ${taskId}`);
+                if (taskElement) {
+                    taskElement.classList.add('starting');
+                    setTimeout(() => taskElement.classList.remove('starting'), 300);
+                }
                 startTask(taskId);
             }
         }
 
         function startTask(taskId) {
-            console.log(` Starting task: ${taskId}`);
+            console.log(`▶ Starting task: ${taskId}`);
             try {
                 activeTaskId = taskId;
                 const task = tasks.find(t => t.id === taskId);
                 if (!task) {
-                    console.error(` Task not found: ${taskId}`);
+                    console.error(`❌ Task not found: ${taskId}`);
                     return;
                 }
 
                 task.startTime = Date.now();
-                console.log(` Task start time: ${new Date(task.startTime).toLocaleTimeString()}`);
+                console.log(`⏱ Task start time: ${new Date(task.startTime).toLocaleTimeString()}`);
 
                 intervals[taskId] = setInterval(() => {
                     const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
@@ -441,21 +784,21 @@
                 }, 1000);
 
                 renderTasks();
-                console.log(` Task started successfully: ${task.name}`);
+                console.log(`✓ Task started successfully: ${task.name}`);
             } catch (error) {
-                console.error(' Error starting task:', error);
+                console.error('❌ Error starting task:', error);
             }
         }
 
         function stopTask(taskId) {
-            console.log(` Stopping task: ${taskId}`);
+            console.log(`⏸ Stopping task: ${taskId}`);
             try {
                 const task = tasks.find(t => t.id === taskId);
                 if (task && task.startTime) {
                     const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
                     task.totalTime += elapsed;
                     task.startTime = null;
-                    console.log(` Task time updated: ${formatTime(task.totalTime)}`);
+                    console.log(`⏱ Task time updated: ${formatTime(task.totalTime)}`);
                 }
 
                 if (intervals[taskId]) {
@@ -467,30 +810,43 @@
                 saveTasks();
                 renderTasks();
                 updateTotalTime();
-                console.log(` Task stopped successfully`);
+                console.log(`✓ Task stopped successfully`);
             } catch (error) {
-                console.error(' Error stopping task:', error);
+                console.error('❌ Error stopping task:', error);
             }
         }
 
         function deleteTask(taskId, event) {
-            if (event) event.stopPropagation();
-            console.log(` Delete button clicked for task: ${taskId}`);
+            if (event) {
+                event.stopPropagation();
+                // Add visual feedback to button
+                const button = event.target.closest('.btn-control');
+                if (button) {
+                    button.classList.add('clicking');
+                    setTimeout(() => button.classList.remove('clicking'), 300);
+                }
+            }
+            console.log(`🗑 Delete button clicked for task: ${taskId}`);
 
             try {
                 const task = tasks.find(t => t.id === taskId);
                 if (!task) {
-                    console.error(` Task not found: ${taskId}`);
+                    console.error(`❌ Task not found: ${taskId}`);
                     return;
                 }
 
-                console.log(` Attempting to delete task: "${task.name}" (ID: ${taskId})`);
+                console.log(`🗑 Attempting to delete task: "${task.name}" (ID: ${taskId})`);
 
                 if (confirm(`Delete task "${task.name}"?`)) {
-                    console.log(` User confirmed deletion`);
+                    console.log(`✓ User confirmed deletion`);
+
+                    // Vibration feedback
+                    if (navigator.vibrate) {
+                        navigator.vibrate([50, 50, 50]);
+                    }
 
                     if (activeTaskId === taskId) {
-                        console.log(` Task is active, stopping it first`);
+                        console.log(`⏸ Task is active, stopping it first`);
                         stopTask(taskId);
                     }
 
@@ -498,36 +854,36 @@
                     tasks = tasks.filter(t => t.id !== taskId);
                     const tasksAfter = tasks.length;
 
-                    console.log(` Tasks count: ${tasksBefore}  ${tasksAfter}`);
+                    console.log(`📊 Tasks count: ${tasksBefore} → ${tasksAfter}`);
 
                     saveTasks();
                     renderTasks();
                     updateTotalTime();
 
-                    console.log(` Task deleted successfully: "${task.name}"`);
+                    console.log(`✓ Task deleted successfully: "${task.name}"`);
                 } else {
-                    console.log(` User cancelled deletion`);
+                    console.log(`✗ User cancelled deletion`);
                 }
             } catch (error) {
-                console.error(' Error deleting task:', error);
+                console.error('❌ Error deleting task:', error);
             }
         }
 
         function editTask(taskId, event) {
             if (event) event.stopPropagation();
-            console.log(` Edit task clicked: ${taskId}`);
+            console.log(`✏ Edit task clicked: ${taskId}`);
 
             try {
                 const task = tasks.find(t => t.id === taskId);
                 if (!task) {
-                    console.error(` Task not found: ${taskId}`);
+                    console.error(`❌ Task not found: ${taskId}`);
                     return;
                 }
 
-                console.log(` Opening edit modal for task: "${task.name}"`);
+                console.log(`✏ Opening edit modal for task: "${task.name}"`);
                 openModal('edit', taskId, task.name);
             } catch (error) {
-                console.error(' Error editing task:', error);
+                console.error('❌ Error editing task:', error);
             }
         }
 
@@ -542,12 +898,12 @@
                 });
                 document.getElementById('totalTime').textContent = formatTime(total);
             } catch (error) {
-                console.error(' Error updating total time:', error);
+                console.error('❌ Error updating total time:', error);
             }
         }
 
         function openModal(mode = 'create', taskId = null, taskName = '') {
-            console.log(` Opening modal in ${mode} mode`);
+            console.log(`📝 Opening modal in ${mode} mode`);
             try {
                 modalMode = mode;
                 editingTaskId = taskId;
@@ -561,69 +917,69 @@
                     modalTitle.textContent = 'Edit Task';
                     taskInput.value = taskName;
                     submitBtn.textContent = 'Save';
-                    console.log(` Editing task: "${taskName}"`);
+                    console.log(`✏ Editing task: "${taskName}"`);
                 } else {
                     modalTitle.textContent = 'New Task';
                     taskInput.value = '';
                     submitBtn.textContent = 'Create';
-                    console.log(` Creating new task`);
+                    console.log(`➕ Creating new task`);
                 }
 
                 modal.classList.add('show');
                 taskInput.focus();
-                console.log(` Modal opened successfully`);
+                console.log(`✓ Modal opened successfully`);
             } catch (error) {
-                console.error(' Error opening modal:', error);
+                console.error('❌ Error opening modal:', error);
             }
         }
 
         function closeModal() {
-            console.log(' Closing modal');
+            console.log('✗ Closing modal');
             try {
                 const modal = document.getElementById('modal');
                 modal.classList.remove('show');
                 document.getElementById('taskInput').value = '';
                 modalMode = 'create';
                 editingTaskId = null;
-                console.log(' Modal closed successfully');
+                console.log('✓ Modal closed successfully');
             } catch (error) {
-                console.error(' Error closing modal:', error);
+                console.error('❌ Error closing modal:', error);
             }
         }
 
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
-                console.log(' Enter key pressed');
+                console.log('⏎ Enter key pressed');
                 submitModal();
             }
         }
 
         function submitModal() {
-            console.log(` Submitting modal in ${modalMode} mode`);
+            console.log(`💾 Submitting modal in ${modalMode} mode`);
             try {
                 const input = document.getElementById('taskInput');
                 const taskName = input.value.trim();
 
                 if (!taskName) {
-                    console.warn(' Task name is empty');
+                    console.warn('⚠ Task name is empty');
                     alert('Please enter a task name');
                     return;
                 }
 
                 if (modalMode === 'edit') {
-                    console.log(` Updating task ${editingTaskId}: "${taskName}"`);
+                    console.log(`✏ Updating task ${editingTaskId}: "${taskName}"`);
                     const task = tasks.find(t => t.id === editingTaskId);
                     if (task) {
                         const oldName = task.name;
                         task.name = taskName;
-                        console.log(` Task renamed: "${oldName}"  "${taskName}"`);
+                        console.log(`✓ Task renamed: "${oldName}" → "${taskName}"`);
                         saveTasks();
                         renderTasks();
                     } else {
-                        console.error(` Task not found: ${editingTaskId}`);
+                        console.error(`❌ Task not found: ${editingTaskId}`);
                     }
                 } else {
-                    console.log(` Creating new task: "${taskName}"`);
+                    console.log(`➕ Creating new task: "${taskName}"`);
                     const newTask = {
                         id: Date.now().toString(),
                         name: taskName,
@@ -632,21 +988,21 @@
                     };
 
                     tasks.push(newTask);
-                    console.log(` Task created with ID: ${newTask.id}`);
+                    console.log(`✓ Task created with ID: ${newTask.id}`);
                     saveTasks();
                     renderTasks();
                 }
 
                 closeModal();
             } catch (error) {
-                console.error(' Error submitting modal:', error);
+                console.error('❌ Error submitting modal:', error);
             }
         }
 
         // Initialize
-        console.log(' Starting application...');
+        console.log('🚀 Starting application...');
         loadTasks();
-        console.log(' Application ready!');
+        console.log('✓ Application ready!');
     </script>
 </body>
 </html>
