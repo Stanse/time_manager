@@ -624,29 +624,24 @@
         const storage = {
             async get(key) {
                 try {
-                    // Try localStorage first (always available and synchronous)
-                    const localValue = localStorage.getItem(key);
-                    console.log('💾 localStorage value:', localValue ? 'found' : 'empty');
-
-                    // Try Telegram WebApp storage if available
+                    // Try Telegram WebApp storage first
                     if (window.Telegram?.WebApp?.CloudStorage) {
-                        console.log('📡 Checking Telegram CloudStorage for GET');
+                        console.log('📡 Using Telegram CloudStorage for GET');
                         return new Promise((resolve) => {
-                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, cloudValue) => {
+                            window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
                                 if (error) {
-                                    console.warn('Telegram storage error, using localStorage:', error);
-                                    resolve({ value: localValue });
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    resolve({ value: localStorage.getItem(key) });
                                 } else {
                                     console.log('✅ Got data from Telegram CloudStorage');
-                                    // Use CloudStorage if available and not empty, otherwise localStorage
-                                    resolve({ value: cloudValue || localValue });
+                                    resolve({ value });
                                 }
                             });
                         });
                     }
                     // Fallback to localStorage
                     console.log('💾 Using localStorage for GET');
-                    return { value: localValue };
+                    return { value: localStorage.getItem(key) };
                 } catch (error) {
                     console.error('Storage get error:', error);
                     return { value: localStorage.getItem(key) };
@@ -654,28 +649,27 @@
             },
             async set(key, value) {
                 try {
-                    // Always save to localStorage first (synchronously)
-                    localStorage.setItem(key, value);
-                    console.log('💾 Saved to localStorage');
-
-                    // Also try Telegram WebApp storage if available
+                    // Try Telegram WebApp storage first
                     if (window.Telegram?.WebApp?.CloudStorage) {
                         return new Promise((resolve, reject) => {
-                            console.log('📡 Saving to Telegram CloudStorage...');
+                        console.log('📡 Using Telegram CloudStorage for SET');
                             window.Telegram.WebApp.CloudStorage.setItem(key, value, (error, success) => {
                                 if (error) {
-                                    console.warn('Telegram storage error:', error);
-                                    resolve(); // Don't fail, localStorage already saved
-                                } else {
-                                    console.log('✅ Saved to Telegram CloudStorage');
+                                    console.warn('Telegram storage error, falling back to localStorage:', error);
+                                    localStorage.setItem(key, value);
                                     resolve();
+                                } else {
+                                    resolve();
+                                    console.log('✅ Saved to Telegram CloudStorage');
                                 }
                             });
                         });
                     }
+                    // Fallback to localStorage
+                    localStorage.setItem(key, value);
                 } catch (error) {
+                    console.log('💾 Using localStorage for SET');
                     console.error('Storage set error:', error);
-                    // Ensure localStorage save even on error
                     localStorage.setItem(key, value);
                 }
             }
@@ -689,17 +683,6 @@
                 if (result && result.value) {
                     tasks = JSON.parse(result.value);
                     console.log(`✓ Loaded ${tasks.length} tasks:`, tasks);
-
-                    // Check if there was an active task that was running
-                    const wasActiveTask = tasks.find(t => t.startTime !== null);
-                    if (wasActiveTask) {
-                        console.log(`⚠️ Found task with startTime: ${wasActiveTask.name}`);
-                        console.log(`   This task was active when app was closed/minimized`);
-                        // Note: We keep the startTime but don't auto-resume
-                        // The user should manually start it again if they want to continue
-                        // Or we could add logic here to resume it automatically
-                    }
-
                     renderTasks();
                     updateTotalTime();
                 } else {
@@ -720,31 +703,6 @@
                 console.log('✓ Tasks saved successfully');
             } catch (error) {
                 console.error('❌ Error saving tasks:', error);
-            }
-        }
-
-        // Synchronous save for critical moments (app close, minimize, etc.)
-        function saveTasksSync() {
-            console.log('💾 Sync saving tasks...', tasks);
-            try {
-                // Always save to localStorage synchronously first
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-
-                // Try to save to Telegram CloudStorage (async, but initiated)
-                if (window.Telegram?.WebApp?.CloudStorage) {
-                    window.Telegram.WebApp.CloudStorage.setItem('tasks', JSON.stringify(tasks),
-                        (error) => {
-                            if (error) {
-                                console.warn('CloudStorage sync save failed:', error);
-                            } else {
-                                console.log('✓ CloudStorage sync save OK');
-                            }
-                        }
-                    );
-                }
-                console.log('✓ Sync save completed');
-            } catch (error) {
-                console.error('❌ Sync save error:', error);
             }
         }
 
@@ -1074,69 +1032,19 @@
                 const task = tasks.find(t => t.id === activeTaskId);
                 if (task && task.startTime) {
                     const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    if (elapsed > 0) {
-                        task.totalTime += elapsed;
-                        console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
-                    }
+                    task.totalTime += elapsed;
                     task.startTime = null;
+                    console.log(`⏱ Saved active task time: ${formatTime(task.totalTime)}`);
                 }
             }
-            // Use synchronous save function
-            saveTasksSync();
-        });
-
-        // Page Visibility API - handles app minimization/backgrounding more reliably
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('📱 App hidden (minimized/backgrounded) - saving...');
-                if (activeTaskId) {
-                    const task = tasks.find(t => t.id === activeTaskId);
-                    if (task && task.startTime) {
-                        const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                        task.totalTime += elapsed;
-                        // Keep startTime as current time so timer continues when app returns
-                        task.startTime = Date.now();
-                        console.log(`⏱ Saved active task time on hide: ${formatTime(task.totalTime)}`);
-                    }
-                }
-                saveTasksSync();
-            } else {
-                console.log('👁️ App visible again - resuming timer if needed');
-                // When app becomes visible again, update startTime to current moment
-                if (activeTaskId) {
-                    const task = tasks.find(t => t.id === activeTaskId);
-                    if (task && task.startTime) {
-                        // Reset startTime to now to continue tracking correctly
-                        task.startTime = Date.now();
-                        console.log(`⏱ Timer resumed for task: ${task.name}`);
-                    }
-                }
+            // Use synchronous localStorage as fallback since async might not complete
+            try {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                console.log('✓ Tasks saved to localStorage on close');
+            } catch (error) {
+                console.error('❌ Error saving on close:', error);
             }
         });
-
-        // pagehide event - more reliable than beforeunload on mobile
-        // This fires when page is actually being unloaded (closed, not just hidden)
-        window.addEventListener('pagehide', (event) => {
-            console.log('📱 Page hide event - final save on close...');
-            if (activeTaskId) {
-                const task = tasks.find(t => t.id === activeTaskId);
-                if (task && task.startTime) {
-                    // Calculate total time from startTime to now
-                    const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                    // Only add elapsed time if it's significant (more than 1 second)
-                    // This avoids double-counting if visibilitychange already saved
-                    if (elapsed > 0) {
-                        task.totalTime += elapsed;
-                        console.log(`⏱ Final save - added ${elapsed}s, total: ${formatTime(task.totalTime)}`);
-                    } else {
-                        console.log(`⏱ Final save - no additional time to add`);
-                    }
-                    task.startTime = null; // Clear startTime on final close
-                }
-            }
-            // Don't clear activeTaskId here - let it be saved for potential resume
-            saveTasksSync();
-        }, { capture: true });
 
         // Telegram WebApp specific: save when app goes to background
         if (window.Telegram?.WebApp) {
@@ -1151,41 +1059,13 @@
                         const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
                         task.totalTime += elapsed;
                         task.startTime = Date.now(); // Reset start time to now
+                        saveTasks();
                     }
                 }
-                saveTasksSync();
             });
-
-            // Save on main button click (if used)
-            window.Telegram.WebApp.onEvent('mainButtonClicked', () => {
-                console.log('🔘 Main button clicked - saving...');
-                saveTasksSync();
-            });
-
-            // Save on back button click
-            window.Telegram.WebApp.onEvent('backButtonClicked', () => {
-                console.log('◀️ Back button clicked - saving...');
-                if (activeTaskId) {
-                    const task = tasks.find(t => t.id === activeTaskId);
-                    if (task && task.startTime) {
-                        const elapsed = Math.floor((Date.now() - task.startTime) / 1000);
-                        task.totalTime += elapsed;
-                        task.startTime = null;
-                    }
-                }
-                saveTasksSync();
-            });
-
-            // Save when theme changes (often happens when app is being closed)
-            window.Telegram.WebApp.onEvent('themeChanged', () => {
-                console.log('🎨 Theme changed - saving as precaution...');
-                saveTasksSync();
-            });
-
-            console.log('✓ Telegram lifecycle handlers configured');
         }
 
-        // Periodic auto-save every 5 minutes when task is active
+        // Periodic auto-save every 30 seconds when task is active
         setInterval(() => {
             if (activeTaskId) {
                 const task = tasks.find(t => t.id === activeTaskId);
@@ -1203,7 +1083,7 @@
                     });
                 }
             }
-        }, 300000); // Every 5 minutes (300000 ms)
+        }, 30000); // Every 30 seconds
 
         // Initialize
         console.log('🚀 Starting application...');
@@ -1212,4 +1092,3 @@
     </script>
 </body>
 </html>
-
