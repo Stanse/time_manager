@@ -98,6 +98,16 @@
         .task-item.active {
             background: rgba(255, 255, 255, 1);
             border: 2px solid #4CAF50;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(76, 175, 80, 0.5);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 15px rgba(76, 175, 80, 0.4);
+            }
         }
 
         .task-name {
@@ -134,7 +144,7 @@
 
         .task-controls {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .btn-control {
@@ -142,11 +152,16 @@
             border: 2px solid rgba(0, 0, 0, 0.1);
             cursor: pointer;
             font-size: 14px;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 12px 16px;
+            min-width: 44px;
+            min-height: 44px;
+            border-radius: 8px;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-control:hover {
@@ -161,6 +176,7 @@
         .btn-start {
             color: #4CAF50;
             border-color: #4CAF50;
+            min-width: 80px;
         }
 
         .btn-start:hover {
@@ -170,19 +186,51 @@
         .btn-stop {
             color: #FF9800;
             border-color: #FF9800;
+            animation: pulse-stop 2s ease-in-out infinite;
+            min-width: 80px;
         }
 
         .btn-stop:hover {
             background: rgba(255, 152, 0, 0.1);
         }
 
+        @keyframes pulse-stop {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+            }
+        }
+
+        @keyframes click-feedback {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(0.92);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .btn-control.clicking {
+            animation: click-feedback 0.3s ease;
+        }
+
         .btn-delete {
-            color: #f44336;
-            border-color: #f44336;
+            color: #999;
+            border-color: transparent;
+            background: transparent;
+            font-size: 20px;
+            padding: 10px;
         }
 
         .btn-delete:hover {
+            color: #f44336;
             background: rgba(244, 67, 54, 0.1);
+            border-color: #f44336;
         }
 
         .new-task-btn {
@@ -288,6 +336,26 @@
 
         .modal-btn-secondary:hover {
             background: #d0d0d0;
+        }
+
+        @keyframes taskStart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes taskStop {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        .task-item.starting {
+            animation: taskStart 0.3s ease;
+        }
+
+        .task-item.stopping {
+            animation: taskStop 0.3s ease;
         }
     </style>
 </head>
@@ -407,11 +475,31 @@
         }
 
         function toggleTask(taskId, event) {
-            if (event) event.stopPropagation();
+            if (event) {
+                event.stopPropagation();
+                // Add visual feedback to button
+                const button = event.target.closest('.btn-control');
+                if (button) {
+                    button.classList.add('clicking');
+                    setTimeout(() => button.classList.remove('clicking'), 300);
+                }
+            }
             console.log(`🔄 Toggle task clicked: ${taskId}`);
+
+            // Vibration feedback (if supported)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            // Find task element for animation
+            const taskElement = event?.target.closest('.task-item');
 
             if (activeTaskId === taskId) {
                 console.log(`⏸ Stopping task: ${taskId}`);
+                if (taskElement) {
+                    taskElement.classList.add('stopping');
+                    setTimeout(() => taskElement.classList.remove('stopping'), 300);
+                }
                 stopTask(taskId);
             } else {
                 if (activeTaskId) {
@@ -419,6 +507,10 @@
                     stopTask(activeTaskId);
                 }
                 console.log(`▶ Starting task: ${taskId}`);
+                if (taskElement) {
+                    taskElement.classList.add('starting');
+                    setTimeout(() => taskElement.classList.remove('starting'), 300);
+                }
                 startTask(taskId);
             }
         }
@@ -479,7 +571,15 @@
         }
 
         function deleteTask(taskId, event) {
-            if (event) event.stopPropagation();
+            if (event) {
+                event.stopPropagation();
+                // Add visual feedback to button
+                const button = event.target.closest('.btn-control');
+                if (button) {
+                    button.classList.add('clicking');
+                    setTimeout(() => button.classList.remove('clicking'), 300);
+                }
+            }
             console.log(`🗑 Delete button clicked for task: ${taskId}`);
 
             try {
@@ -493,6 +593,11 @@
 
                 if (confirm(`Delete task "${task.name}"?`)) {
                     console.log(`✓ User confirmed deletion`);
+
+                    // Vibration feedback
+                    if (navigator.vibrate) {
+                        navigator.vibrate([50, 50, 50]);
+                    }
 
                     if (activeTaskId === taskId) {
                         console.log(`⏸ Task is active, stopping it first`);
