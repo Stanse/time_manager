@@ -1,3 +1,5 @@
+import { logger } from '../utils/Logger.js';
+
 /**
  * BaseView - Abstract base class for all views
  * Provides common view functionality
@@ -60,9 +62,13 @@ export class BaseView {
    */
   on(event, selector, handler) {
     this.element.addEventListener(event, (e) => {
+      logger.log(`👆 Click on element, looking for: ${selector}`);
       const target = e.target.closest(selector);
       if (target) {
+        logger.log(`✅ Found target: ${selector}`);
         handler(e, target);
+      } else {
+        logger.log(`❌ Target not found: ${selector}`);
       }
     });
   }

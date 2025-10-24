@@ -67,10 +67,15 @@ export class PomodoroController {
    * Setup event listeners
    */
   setupEventListeners() {
+    logger.log('🔧 Setting up event listeners...');
+    logger.log('Controls element:', this.controlsView.element);
+
     // Control buttons
     this.controlsView.on('click', '[data-action="start"]', () => this.handleStart());
     this.controlsView.on('click', '[data-action="pause"]', () => this.handlePause());
     this.controlsView.on('click', '[data-action="reset"]', () => this.handleReset());
+
+    logger.log('✓ Control button listeners attached');
 
     // Mode tabs
     const modeTabs = document.querySelectorAll('.mode-tab');
