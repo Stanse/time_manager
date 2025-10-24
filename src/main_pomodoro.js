@@ -1,6 +1,7 @@
 /**
  * Pomodoro Timer - Main entry point
  */
+import './styles/pomodoro-index.css';
 import { PomodoroController } from './controllers/PomodoroController.js';
 import { logger } from './utils/Logger.js';
 
