@@ -2,6 +2,7 @@ import { pomodoroService } from '../services/PomodoroService.js';
 import { logger } from '../utils/Logger.js';
 import { PomodoroTimerView } from '../views/PomodoroTimerView.js';
 import { PomodoroControlsView } from '../views/PomodoroControlsView.js';
+import { DebugView } from '../views/DebugView.js';
 
 /**
  * PomodoroController - Main controller for Pomodoro Timer
@@ -24,6 +25,12 @@ export class PomodoroController {
     this.timerView = new PomodoroTimerView(timerElement);
     this.controlsView = new PomodoroControlsView(controlsElement);
 
+    // Initialize debug view
+    this.debugView = new DebugView(
+      document.getElementById('debugPanel'),
+      document.getElementById('debugToggle')
+    );
+
     this.setupEventListeners();
     this.subscribeToServiceEvents();
   }
@@ -33,6 +40,16 @@ export class PomodoroController {
    */
   async initialize() {
     logger.log('🚀 Initializing Pomodoro Timer...');
+
+    // Enable logger for debugging
+    logger.enable();
+
+    // Setup debug logger callback
+    logger.onLog((log) => {
+      if (this.debugView.isEnabled()) {
+        this.debugView.addLog(log);
+      }
+    });
 
     await this.service.initialize();
 
@@ -96,6 +113,22 @@ export class PomodoroController {
         if (e.target === modal) {
           this.closeSettings();
         }
+      });
+    }
+
+    // Debug panel toggle
+    const debugToggle = document.getElementById('debugToggle');
+    if (debugToggle) {
+      debugToggle.addEventListener('click', () => {
+        this.debugView.toggle();
+      });
+    }
+
+    // Debug panel clear button
+    const debugClear = document.querySelector('.debug-clear');
+    if (debugClear) {
+      debugClear.addEventListener('click', () => {
+        logger.clear();
       });
     }
   }
