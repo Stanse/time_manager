@@ -80,25 +80,31 @@ export class PomodoroTimer {
    * Timer completed
    */
   onComplete() {
+    console.log('🔔 PomodoroTimer.onComplete() called, current mode:', this.mode);
     this.state = 'idle';
 
     // Save previous mode before switching
     this.previousMode = this.mode;
+    console.log('📝 Saved previousMode:', this.previousMode);
 
     if (this.mode === 'work') {
       this.pomodorosCompleted++;
 
       // Every 4 pomodoros = long break
       if (this.pomodorosCompleted % 4 === 0) {
+        console.log('➡️ Switching to longBreak');
         this.switchMode('longBreak', this.settings);
       } else {
+        console.log('➡️ Switching to shortBreak');
         this.switchMode('shortBreak', this.settings);
       }
     } else {
       // After break, go back to work
+      console.log('➡️ Switching to work');
       this.switchMode('work', this.settings);
       this.currentSession++;
     }
+    console.log('✓ Mode switched from', this.previousMode, 'to', this.mode);
   }
 
   /**

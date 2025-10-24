@@ -149,6 +149,7 @@ export class PomodoroService extends EventEmitter {
    * Timer completed
    */
   onTimerComplete() {
+    logger.log('🏁 PomodoroService.onTimerComplete() called');
     this.stopUpdateInterval();
     this.saveTimer();
 
@@ -169,11 +170,20 @@ export class PomodoroService extends EventEmitter {
     this.updateBodyClass(this.timer.mode);
 
     // Auto-start next session based on PREVIOUS mode
+    logger.log('🔍 Auto-start check:');
+    logger.log('  previousMode:', this.timer.previousMode);
+    logger.log('  currentMode:', this.timer.mode);
+    logger.log('  autoStartBreaks:', this.settings.autoStartBreaks);
+    logger.log('  autoStartWork:', this.settings.autoStartWork);
+
     if (
       (this.timer.previousMode === 'work' && this.settings.autoStartBreaks) ||
       (this.timer.previousMode !== 'work' && this.timer.previousMode !== null && this.settings.autoStartWork)
     ) {
+      logger.log('✅ Auto-start condition met! Starting in 1 second...');
       setTimeout(() => this.start(), 1000);
+    } else {
+      logger.log('❌ Auto-start condition NOT met');
     }
 
     logger.log('✓ Timer completed');
