@@ -10,6 +10,7 @@ export class PomodoroTimer {
     this.startTime = null;
     this.pomodorosCompleted = 0;
     this.currentSession = 1;
+    this.settings = null; // Will be set by updateSettings()
   }
 
   /**
@@ -85,13 +86,13 @@ export class PomodoroTimer {
 
       // Every 4 pomodoros = long break
       if (this.pomodorosCompleted % 4 === 0) {
-        this.switchMode('longBreak');
+        this.switchMode('longBreak', this.settings);
       } else {
-        this.switchMode('shortBreak');
+        this.switchMode('shortBreak', this.settings);
       }
     } else {
       // After break, go back to work
-      this.switchMode('work');
+      this.switchMode('work', this.settings);
       this.currentSession++;
     }
   }
@@ -99,17 +100,27 @@ export class PomodoroTimer {
   /**
    * Switch timer mode
    * @param {string} mode - work, shortBreak, longBreak
+   * @param {Object} settings - Optional settings object with durations
    */
-  switchMode(mode) {
+  switchMode(mode, settings = null) {
     this.mode = mode;
     this.state = 'idle';
 
-    // Default times
-    const times = {
-      work: 25 * 60,
-      shortBreak: 5 * 60,
-      longBreak: 15 * 60
-    };
+    // Use provided settings or default times
+    let times;
+    if (settings) {
+      times = {
+        work: settings.workDuration * 60,
+        shortBreak: settings.shortBreakDuration * 60,
+        longBreak: settings.longBreakDuration * 60
+      };
+    } else {
+      times = {
+        work: 25 * 60,
+        shortBreak: 5 * 60,
+        longBreak: 15 * 60
+      };
+    }
 
     this.totalTime = times[mode];
     this.timeLeft = times[mode];
@@ -121,6 +132,8 @@ export class PomodoroTimer {
    * @param {Object} settings - Timer settings
    */
   updateSettings(settings) {
+    this.settings = settings; // Save settings for later use
+
     if (settings.workDuration) {
       const times = {
         work: settings.workDuration * 60,
