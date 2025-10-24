@@ -1,0 +1,109 @@
+/* Tasks section styles */
+.tasks-section {
+    text-align: center;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    opacity: 0.9;
+}
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.task-item {
+    background: rgba(255, 255, 255, 0.95);
+    color: #666;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 300px;
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.task-item.active {
+    background: rgba(255, 255, 255, 1);
+    border: 2px solid #4CAF50;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.task-name {
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.task-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 0;
+    border-radius: 4px;
+    transition: background 0.2s;
+    align-items: flex-start;
+}
+
+.task-info:hover {
+    background: rgba(108, 213, 160, 0.05);
+}
+
+.task-time {
+    font-weight: 600;
+    color: #4CAF50;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.task-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.new-task-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 300px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto;
+}
+
+.new-task-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+}

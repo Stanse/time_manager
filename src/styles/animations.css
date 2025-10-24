@@ -1,0 +1,50 @@
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(76, 175, 80, 0.5);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 15px rgba(76, 175, 80, 0.4);
+    }
+}
+
+@keyframes pulse-stop {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 152, 0, 0);
+    }
+}
+
+@keyframes click-feedback {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.92);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes taskStart {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes taskStop {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.task-item.starting {
+    animation: taskStart 0.3s ease;
+}
+
+.task-item.stopping {
+    animation: taskStop 0.3s ease;
+}

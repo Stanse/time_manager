@@ -1,0 +1,65 @@
+/* Button styles */
+.btn-control {
+    background: rgba(0, 0, 0, 0.05);
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 12px 16px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-control:hover {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.btn-control:active {
+    transform: scale(0.95);
+}
+
+.btn-start {
+    color: #4CAF50;
+    border-color: #4CAF50;
+    min-width: 80px;
+}
+
+.btn-start:hover {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.btn-stop {
+    color: #FF9800;
+    border-color: #FF9800;
+    animation: pulse-stop 2s ease-in-out infinite;
+    min-width: 80px;
+}
+
+.btn-stop:hover {
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.btn-control.clicking {
+    animation: click-feedback 0.3s ease;
+}
+
+.btn-delete {
+    color: #999;
+    border-color: transparent;
+    background: transparent;
+    font-size: 20px;
+    padding: 10px;
+}
+
+.btn-delete:hover {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+    border-color: #f44336;
+}
