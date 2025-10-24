@@ -203,12 +203,15 @@ export class TaskService {
    * Setup lifecycle handlers for app close/background
    */
   setupLifecycleHandlers() {
-    // Save before page unload
+    // Save before page unload (ПОЛНОЕ ЗАКРЫТИЕ)
     window.addEventListener('beforeunload', () => {
       logger.log('💾 Auto-saving before app close...');
       const activeTask = this.taskList.getActiveTask();
       if (activeTask) {
+        // Останавливаем задачу и очищаем startTime
         activeTask.stop();
+        // Очищаем activeTaskId чтобы при следующем открытии задача не стартовала
+        this.taskList.activeTaskId = null;
       }
 
       // Use synchronous localStorage as fallback
@@ -221,15 +224,17 @@ export class TaskService {
       }
     });
 
-    // Telegram WebApp viewport change (app backgrounded)
+    // Telegram WebApp viewport change (СВОРАЧИВАНИЕ - задача продолжает работать)
     if (window.Telegram?.WebApp) {
       logger.log('📱 Setting up Telegram lifecycle handlers...');
       window.Telegram.WebApp.onEvent('viewportChanged', async () => {
         logger.log('👁️ Viewport changed - auto-saving...');
         const activeTask = this.taskList.getActiveTask();
         if (activeTask && activeTask.startTime) {
+          // Сохраняем прогресс, но НЕ останавливаем задачу
           const elapsed = Math.floor((Date.now() - activeTask.startTime) / 1000);
           activeTask.totalTime += elapsed;
+          // Сбрасываем startTime на текущее время чтобы продолжить счет
           activeTask.startTime = Date.now();
           await this.saveTasks();
         }
