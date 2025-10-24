@@ -127,7 +127,9 @@ export class PomodoroService extends EventEmitter {
     this.updateInterval = setInterval(() => {
       this.timer.updateTimeLeft();
 
-      if (this.timer.timeLeft === 0) {
+      if (this.timer.timeLeft === 0 && this.timer.state === 'running') {
+        logger.log('⏰ Timer reached 0, calling timer.onComplete()');
+        this.timer.onComplete();
         this.onTimerComplete();
       }
 

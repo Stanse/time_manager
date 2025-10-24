@@ -51,9 +51,8 @@ export class PomodoroTimer {
       const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
       this.timeLeft = Math.max(0, this.totalTime - elapsed);
 
-      if (this.timeLeft === 0) {
-        this.onComplete();
-      }
+      // NOTE: Don't call onComplete() here - let PomodoroService handle it
+      // to avoid race condition where timeLeft gets reset before service checks it
     }
   }
 
