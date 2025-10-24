@@ -138,7 +138,21 @@ export class TaskService {
       if (data) {
         const parsed = JSON.parse(data);
         this.taskList.fromJSON(parsed);
-        logger.log(`✓ Loaded ${this.taskList.getAllTasks().length} tasks`);
+
+        // ВАЖНО: При загрузке всегда останавливаем все активные задачи
+        // Пользователь должен вручную нажать START после открытия приложения
+        const tasks = this.taskList.getAllTasks();
+        tasks.forEach(task => {
+          if (task.startTime !== null) {
+            // Сохраняем накопленное время, но очищаем startTime
+            task.startTime = null;
+          }
+        });
+
+        // Очищаем activeTaskId
+        this.taskList.activeTaskId = null;
+
+        logger.log(`✓ Loaded ${tasks.length} tasks (all stopped)`);
       } else {
         logger.log('📝 No saved tasks found');
       }
