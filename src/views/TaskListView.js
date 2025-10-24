@@ -19,6 +19,9 @@ export class TaskListView extends BaseView {
     // Clear existing intervals
     this.clearIntervals();
 
+    // Store tasks for interval updates
+    this.tasks = tasks;
+
     // Render tasks
     this.clear();
     tasks.forEach(task => {
@@ -70,10 +73,10 @@ export class TaskListView extends BaseView {
     const interval = setInterval(() => {
       const timeDisplay = document.querySelector(`[data-time-display="${taskId}"]`);
       if (timeDisplay) {
-        const taskElement = timeDisplay.closest('[data-task-id]');
-        if (taskElement) {
-          // This will be updated by controller
-          this.emit('updateTime', { taskId });
+        // Find task and update time display
+        const task = this.tasks.find(t => t.id === taskId);
+        if (task) {
+          timeDisplay.textContent = TimeFormatter.format(task.getCurrentTime());
         }
       } else {
         this.clearInterval(taskId);
