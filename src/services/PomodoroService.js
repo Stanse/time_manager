@@ -168,10 +168,10 @@ export class PomodoroService extends EventEmitter {
     // Update body class
     this.updateBodyClass(this.timer.mode);
 
-    // Auto-start next session
+    // Auto-start next session based on PREVIOUS mode
     if (
-      (this.timer.mode !== 'work' && this.settings.autoStartWork) ||
-      (this.timer.mode === 'work' && this.settings.autoStartBreaks)
+      (this.timer.previousMode === 'work' && this.settings.autoStartBreaks) ||
+      (this.timer.previousMode !== 'work' && this.timer.previousMode !== null && this.settings.autoStartWork)
     ) {
       setTimeout(() => this.start(), 1000);
     }

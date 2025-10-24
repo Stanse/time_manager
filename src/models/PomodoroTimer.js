@@ -5,6 +5,7 @@ export class PomodoroTimer {
   constructor() {
     this.state = 'idle'; // idle, running, paused
     this.mode = 'work'; // work, shortBreak, longBreak
+    this.previousMode = null; // Track previous mode for auto-start logic
     this.timeLeft = 25 * 60; // seconds
     this.totalTime = 25 * 60; // seconds
     this.startTime = null;
@@ -81,6 +82,9 @@ export class PomodoroTimer {
   onComplete() {
     this.state = 'idle';
 
+    // Save previous mode before switching
+    this.previousMode = this.mode;
+
     if (this.mode === 'work') {
       this.pomodorosCompleted++;
 
@@ -156,6 +160,7 @@ export class PomodoroTimer {
     return {
       state: this.state,
       mode: this.mode,
+      previousMode: this.previousMode,
       timeLeft: this.timeLeft,
       totalTime: this.totalTime,
       startTime: this.startTime,
@@ -171,6 +176,7 @@ export class PomodoroTimer {
   fromJSON(data) {
     this.state = data.state || 'idle';
     this.mode = data.mode || 'work';
+    this.previousMode = data.previousMode || null;
     this.timeLeft = data.timeLeft || 25 * 60;
     this.totalTime = data.totalTime || 25 * 60;
     this.startTime = data.startTime;
