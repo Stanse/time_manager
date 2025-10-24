@@ -195,7 +195,8 @@ body.long-break-mode {
     backdrop-filter: blur(10px);
     padding: 16px 24px;
     border-radius: 16px;
-    min-width: 100px;
+    min-width: 120px;
+    width: 120px;
 }
 
 .stat-value {
@@ -211,6 +212,27 @@ body.long-break-mode {
     color: rgba(255, 255, 255, 0.8);
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Reset Stats Button */
+.reset-stats-btn {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    margin-top: -10px;
+}
+
+.reset-stats-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
 }
 
 /* Settings Button */

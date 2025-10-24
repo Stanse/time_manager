@@ -79,6 +79,17 @@ export class PomodoroService extends EventEmitter {
   }
 
   /**
+   * Reset statistics (pomodoros and session count)
+   */
+  resetStats() {
+    this.timer.pomodorosCompleted = 0;
+    this.timer.currentSession = 1;
+    this.saveTimer();
+    this.emit('stateChanged', this.timer);
+    logger.log('📊 Statistics reset');
+  }
+
+  /**
    * Switch mode
    * @param {string} mode - work, shortBreak, longBreak
    */

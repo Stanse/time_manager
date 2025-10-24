@@ -136,6 +136,14 @@ export class PomodoroController {
         logger.clear();
       });
     }
+
+    // Reset stats button
+    const resetStatsBtn = document.getElementById('resetStatsBtn');
+    if (resetStatsBtn) {
+      resetStatsBtn.addEventListener('click', () => {
+        this.handleResetStats();
+      });
+    }
   }
 
   /**
@@ -241,6 +249,17 @@ export class PomodoroController {
   handleModeSwitch(mode) {
     logger.log(`🔄 Switching to ${mode} mode`);
     this.service.switchMode(mode);
+  }
+
+  /**
+   * Handle reset stats
+   */
+  handleResetStats() {
+    if (confirm('Are you sure you want to reset all statistics? This cannot be undone.')) {
+      logger.log('🔄 Resetting statistics...');
+      this.service.resetStats();
+      logger.log('✓ Statistics reset');
+    }
   }
 
   /**
