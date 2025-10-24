@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMPLE Time Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                SIMP<span class="logo-dot"></span>E
+            </div>
+            <div class="total-time">TODAY <span id="totalTime">0h 0m 0s</span></div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="section-title">ALL TASKS</div>
+            <div class="task-list" id="taskList"></div>
+            <button class="new-task-btn">
+                <span style="font-size: 24px;">+</span> NEW TASK
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal for creating/editing task -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">New Task</div>
+            <input
+                type="text"
+                class="modal-input"
+                id="taskInput"
+                placeholder="Enter task name..."
+            >
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary">Cancel</button>
+                <button class="modal-btn modal-btn-primary" id="modalSubmitBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Panel -->
+    <div class="debug-toggle" id="debugToggle">🐛</div>
+    <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">
+            <div class="debug-title">🐛 DEBUG CONSOLE</div>
+            <button class="debug-clear">Clear</button>
+        </div>
+        <div id="debugLogs"></div>
+    </div>
+
+    <!-- Main application script -->
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

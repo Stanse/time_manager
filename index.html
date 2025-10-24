@@ -1,57 +1,98 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIMPLE Time Tracker</title>
+    <title>Pomodoro Timer - Focus & Productivity</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/src/styles/pomodoro.css">
 </head>
-<body>
+<body class="work-mode">
+    <!-- Settings Button -->
+    <button class="settings-btn" aria-label="Settings">⚙️</button>
+
     <div class="container">
-        <div class="header">
-            <div class="logo">
-                SIMP<span class="logo-dot"></span>E
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="work">Focus</button>
+            <button class="mode-tab" data-mode="shortBreak">Short Break</button>
+            <button class="mode-tab" data-mode="longBreak">Long Break</button>
+        </div>
+
+        <!-- Circular Timer -->
+        <div class="timer-circle"></div>
+
+        <!-- Control Buttons -->
+        <div class="timer-controls"></div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="pomodorosCompleted">0</div>
+                <div class="stat-label">Pomodoros</div>
             </div>
-            <div class="total-time">TODAY <span id="totalTime">0h 0m 0s</span></div>
-        </div>
-
-        <div class="tasks-section">
-            <div class="section-title">ALL TASKS</div>
-            <div class="task-list" id="taskList"></div>
-            <button class="new-task-btn">
-                <span style="font-size: 24px;">+</span> NEW TASK
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal for creating/editing task -->
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <div class="modal-title" id="modalTitle">New Task</div>
-            <input
-                type="text"
-                class="modal-input"
-                id="taskInput"
-                placeholder="Enter task name..."
-            >
-            <div class="modal-buttons">
-                <button class="modal-btn modal-btn-secondary">Cancel</button>
-                <button class="modal-btn modal-btn-primary" id="modalSubmitBtn">Create</button>
+            <div class="stat-item">
+                <div class="stat-value" id="currentSession">1</div>
+                <div class="stat-label">Session</div>
             </div>
         </div>
     </div>
 
-    <!-- Debug Panel -->
-    <div class="debug-toggle" id="debugToggle">🐛</div>
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-header">
-            <div class="debug-title">🐛 DEBUG CONSOLE</div>
-            <button class="debug-clear">Clear</button>
+    <!-- Settings Modal -->
+    <div class="settings-modal">
+        <div class="settings-content">
+            <h2 class="settings-title">Settings</h2>
+
+            <div class="setting-item">
+                <label class="setting-label">Focus Duration (minutes)</label>
+                <input type="number" id="workDuration" class="setting-input" min="1" max="60" value="25">
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Short Break (minutes)</label>
+                <input type="number" id="shortBreakDuration" class="setting-input" min="1" max="30" value="5">
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Long Break (minutes)</label>
+                <input type="number" id="longBreakDuration" class="setting-input" min="1" max="60" value="15">
+            </div>
+
+            <div class="setting-item setting-toggle">
+                <label class="setting-label">Auto-start Breaks</label>
+                <div class="toggle-switch" id="autoStartBreaks">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <div class="setting-item setting-toggle">
+                <label class="setting-label">Auto-start Focus</label>
+                <div class="toggle-switch" id="autoStartWork">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <div class="setting-item setting-toggle">
+                <label class="setting-label">Sound</label>
+                <div class="toggle-switch active" id="soundEnabled">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <div class="setting-item setting-toggle">
+                <label class="setting-label">Notifications</label>
+                <div class="toggle-switch active" id="notificationsEnabled">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn-settings btn-secondary" id="cancelSettings">Cancel</button>
+                <button class="btn-settings btn-primary" id="saveSettings">Save</button>
+            </div>
         </div>
-        <div id="debugLogs"></div>
     </div>
 
-    <!-- Main application script -->
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main_pomodoro.js"></script>
 </body>
 </html>
