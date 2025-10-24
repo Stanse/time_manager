@@ -16,7 +16,7 @@ export class PomodoroControlsView extends BaseView {
     if (state === 'idle' || state === 'paused') {
       buttons = `
         <button class="btn-control" data-action="start">
-          ${state === 'paused' ? 'Resume' : 'Start'}
+          ${state === 'paused' ? 'RESUME' : 'START'}
         </button>
       `;
     } else if (state === 'running') {
