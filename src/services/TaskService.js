@@ -123,9 +123,18 @@ export class TaskService {
    * @param {string} taskId - Task ID
    * @returns {boolean} True if toggled
    */
-  toggleTask(taskId) {
+  async toggleTask(taskId) {
     logger.log(`🔄 Toggling task: ${taskId}`);
-    return this.taskList.toggleTask(taskId);
+    const wasActive = this.taskList.activeTaskId === taskId;
+    const result = this.taskList.toggleTask(taskId);
+
+    // Если задача была остановлена - сохраняем данные
+    if (result && wasActive) {
+      await this.saveTasks();
+      logger.log('💾 Task stopped and saved');
+    }
+
+    return result;
   }
 
   /**

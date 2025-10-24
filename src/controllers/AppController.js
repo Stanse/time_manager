@@ -158,7 +158,7 @@ export class AppController {
   /**
    * Handle toggle task
    */
-  handleToggleTask(taskId, event) {
+  async handleToggleTask(taskId, event) {
     logger.log(`🔄 Toggle task: ${taskId}`);
 
     // Add visual feedback
@@ -168,7 +168,7 @@ export class AppController {
       setTimeout(() => button.classList.remove('clicking'), 300);
     }
 
-    this.taskService.toggleTask(taskId);
+    await this.taskService.toggleTask(taskId);
   }
 
   /**
