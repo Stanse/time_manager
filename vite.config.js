@@ -11,7 +11,8 @@ export default defineConfig(({ command }) => {
       assetsDir: 'assets',
       rollupOptions: {
         input: {
-          main: './index.html'
+          main: './index.html',
+          tracker: './index_tracker.html'
         }
       }
     },
