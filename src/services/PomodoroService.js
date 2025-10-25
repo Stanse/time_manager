@@ -3,6 +3,7 @@ import { PomodoroSettings } from '../models/PomodoroSettings.js';
 import { storage } from './StorageService.js';
 import { logger } from '../utils/Logger.js';
 import { EventEmitter } from '../utils/EventEmitter.js';
+import { apiService } from './ApiService.js';
 
 /**
  * PomodoroService - Manages pomodoro timer logic
@@ -42,6 +43,17 @@ export class PomodoroService extends EventEmitter {
 
     // Apply settings to timer
     this.timer.updateSettings(this.settings);
+
+    // Initialize API service
+    apiService.initialize();
+
+    // Check API health
+    const apiHealthy = await apiService.healthCheck();
+    if (apiHealthy) {
+      logger.log('✓ Backend API is available');
+    } else {
+      logger.warn('⚠️ Backend API is not available - working in offline mode');
+    }
 
     logger.log('✓ Pomodoro Service initialized');
   }
@@ -155,6 +167,9 @@ export class PomodoroService extends EventEmitter {
     this.stopUpdateInterval();
     this.saveTimer();
 
+    // Send data to backend API
+    this.reportToBackend();
+
     // Play sound
     if (this.settings.soundEnabled) {
       this.playCompletionSound();
@@ -189,6 +204,40 @@ export class PomodoroService extends EventEmitter {
     }
 
     logger.log('✓ Timer completed');
+  }
+
+  /**
+   * Report completed pomodoro to backend
+   */
+  async reportToBackend() {
+    // Only report if we have Telegram user data
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      logger.log('⚠️ No Telegram user data - skipping backend report');
+      return;
+    }
+
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    const previousMode = this.timer.previousMode || 'work';
+
+    // Calculate duration based on settings
+    const duration = previousMode === 'work' ? this.settings.workDuration :
+                     previousMode === 'shortBreak' ? this.settings.shortBreakDuration :
+                     this.settings.longBreakDuration;
+
+    // Calculate start time (approximately)
+    const completedAt = new Date();
+    const startedAt = new Date(completedAt.getTime() - (duration * 60 * 1000));
+
+    try {
+      await apiService.reportPomodoroComplete({
+        userId: user.id,
+        mode: previousMode,
+        duration: duration,
+        startedAt: startedAt.toISOString()
+      });
+    } catch (error) {
+      logger.error('Failed to report to backend:', error);
+    }
   }
 
   /**

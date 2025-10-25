@@ -1,0 +1,24 @@
+[Unit]
+Description=Pomodoro Telegram Bot
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=pomodoro
+Group=pomodoro
+WorkingDirectory=/var/www/pomodoro/backend
+Environment="PATH=/var/www/pomodoro/backend/venv/bin"
+ExecStart=/var/www/pomodoro/backend/venv/bin/python -m src.bot.bot
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/pomodoro/bot.log
+StandardError=append:/var/log/pomodoro/bot-error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
