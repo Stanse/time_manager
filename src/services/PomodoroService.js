@@ -195,25 +195,44 @@ export class PomodoroService extends EventEmitter {
    * Play completion sound
    */
   playCompletionSound() {
-    // Simple beep using Web Audio API
+    // Use Telegram haptic feedback instead of sound
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        // Use notification impact for completion
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+        // Add extra impacts for emphasis
+        setTimeout(() => {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        }, 100);
 
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
+        setTimeout(() => {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        }, 200);
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        logger.log('🔔 Haptic feedback triggered');
+      } else {
+        // Fallback to Web Audio API for non-Telegram environments (testing)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+
+        logger.log('🔊 Web Audio fallback used');
+      }
     } catch (error) {
-      logger.warn('Sound not supported:', error);
+      logger.warn('Sound/Haptic not supported:', error);
     }
   }
 
@@ -227,23 +246,35 @@ export class PomodoroService extends EventEmitter {
       longBreak: 'Long break over! Ready for next session? 🚀'
     };
 
-    const previousMode = this.timer.mode === 'work' ? 'work' :
-                         (this.timer.pomodorosCompleted % 4 === 0 ? 'longBreak' : 'shortBreak');
+    // Determine which message to show based on PREVIOUS mode
+    const previousMode = this.timer.previousMode || 'work';
+    const message = messages[previousMode] || 'Timer completed!';
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Pomodoro Timer', {
-        body: messages[previousMode],
-        icon: '/icon.png',
-        tag: 'pomodoro'
-      });
-    } else if ('Notification' in window && Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          new Notification('Pomodoro Timer', {
-            body: messages[previousMode]
-          });
-        }
-      });
+    try {
+      if (window.Telegram?.WebApp?.showAlert) {
+        // Use Telegram's showAlert for notifications
+        window.Telegram.WebApp.showAlert(message);
+        logger.log('📢 Telegram alert shown:', message);
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        // Fallback to browser notifications for non-Telegram environments
+        new Notification('Pomodoro Timer', {
+          body: message,
+          icon: '/icon.png',
+          tag: 'pomodoro'
+        });
+        logger.log('📢 Browser notification shown');
+      } else if ('Notification' in window && Notification.permission !== 'denied') {
+        // Request permission and show notification
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            new Notification('Pomodoro Timer', {
+              body: message
+            });
+          }
+        });
+      }
+    } catch (error) {
+      logger.warn('Notification not supported:', error);
     }
   }
 

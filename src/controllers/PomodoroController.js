@@ -55,9 +55,16 @@ export class PomodoroController {
 
     this.render();
 
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
+    // Request notification permission only for non-Telegram environments
+    if (!window.Telegram?.WebApp && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
+    }
+
+    // Initialize Telegram WebApp if available
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+      logger.log('📱 Telegram WebApp initialized');
     }
 
     logger.log('✓ Pomodoro Timer ready!');
