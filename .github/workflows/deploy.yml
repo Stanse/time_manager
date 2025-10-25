@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # или master, в зависимости от вашей основной ветки
+      - pomodoro_timer  # Деплой Pomodoro Timer
   workflow_dispatch:  # Позволяет запускать вручную
 
 permissions:
